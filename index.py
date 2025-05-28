@@ -27,8 +27,11 @@ def analyze_upsells():
         main_products = order_data[order_data['Допродажа'].isna() | (order_data['Допродажа'] == '')]
         upsell_products = order_data[order_data['Допродажа'] == 'Допродажа']
         
-        # Если в заказе есть допродажи
-        if not upsell_products.empty:
+        # Фильтруем допродажи, исключая коробки и пакеты
+        real_upsells = upsell_products[~upsell_products['Товары'].str.contains('Коробка|Пакет', na=False)]
+                
+        # Если в заказе есть допродажи (не считая коробки и пакеты)
+        if not real_upsells.empty:
             orders_with_upsells += 1
             
             # Для каждого основного товара увеличиваем счетчик допродаж
@@ -41,11 +44,11 @@ def analyze_upsells():
                 
                 upsell_stats[main_product_name] += 1
                 
-                # Сохраняем детальную информацию
-                upsell_items = [item['Товары'] for _, item in upsell_products.iterrows()]
+                # Сохраняем детальную информацию, исключая коробки и пакеты
+                upsell_items = [item['Товары'] for _, item in real_upsells.iterrows()]
                 detailed_stats[main_product_name].extend(upsell_items)
                 
-                print(f"Заказ {order_id}: к '{main_product_name}' добавили {len(upsell_products)} допродаж")
+                print(f"Заказ {order_id}: к '{main_product_name}' добавили {len(real_upsells)} допродаж")
     
     print(f"\nВсего заказов: {total_orders}")
     print(f"Заказов с допродажами: {orders_with_upsells}")
